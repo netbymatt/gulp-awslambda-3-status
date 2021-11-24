@@ -6,8 +6,14 @@ const checkLambdaStatus = (FunctionName, lambda, count = 10) => new Promise((res
 	lambda.send(new GetFunctionConfigurationCommand({
 		FunctionName,
 	})).then((config) => {
-		if (config.State === 'Error') reject(new Error(`${FunctionName} is in error state`));
-		if (count <= 0) reject(new Error(`Ran out of retries waiting for ${FunctionName} to become Active`));
+		if (config.State === 'Error') {
+			reject(new Error(`${FunctionName} is in error state`));
+			return false;
+		}
+		if (count <= 0) {
+			reject(new Error(`Ran out of retries waiting for ${FunctionName} to become Active`));
+			return false;
+		}
 		if (config.State === 'Active' && config.LastUpdateStatus !== 'InProgress') {
 			resolve(true);
 			return true;
