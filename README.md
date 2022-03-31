@@ -64,7 +64,7 @@ npx gulp check-status
 ## API
 
 ```js
-checkLambdaStatus(functionName, lambdaClient)
+checkLambdaStatus(functionName, lambdaClient, count, verbose)
 ```
 
 ### `functionName`
@@ -74,3 +74,11 @@ A string with the name of the Lambda function to be queried.
 ### `lambdaClient`
 
 A pre-configured LambdaClient instance.
+
+### `count = 10`
+
+Maximum number of retries at a 1 second interval.
+
+### `verbose = false`
+
+When true, provide a status every time the function status is queried including the number of seconds (retries) remaining.
