@@ -1,5 +1,5 @@
-const { GetFunctionConfigurationCommand } = require('@aws-sdk/client-lambda');
-const log = require('fancy-log');
+import { GetFunctionConfigurationCommand } from '@aws-sdk/client-lambda';
+import log from 'fancy-log';
 
 // get the function configuration and test up to 10 times at 1s intervals for the function to be Active
 const checkLambdaStatus = (FunctionName, lambda, count = 10, _verbose = false) => new Promise((resolve, reject) => {
@@ -11,16 +11,18 @@ const checkLambdaStatus = (FunctionName, lambda, count = 10, _verbose = false) =
 	})).then((config) => {
 		if (config.State === 'Error') {
 			reject(new Error(`${FunctionName} is in error state`));
-			return false;
+			return;
 		}
 		if (count <= 0) {
 			log.error(`Status at Timeout: State: ${config.state}, LastUpdateStatus: ${config.LastUpdateStatus}`);
 			reject(new Error(`Ran out of retries waiting for ${FunctionName} to become Active`));
-			return false;
+			return;
 		}
 		if (config.State === 'Active' && config.LastUpdateStatus !== 'InProgress') {
+			// post message
+			log(`Update complete for "${FunctionName}"`);
 			resolve(true);
-			return true;
+			return;
 		}
 		if (firstRun && !verbose) {
 			log(`Waiting for update to complete "${FunctionName}"`);
@@ -29,16 +31,16 @@ const checkLambdaStatus = (FunctionName, lambda, count = 10, _verbose = false) =
 		}
 		// call again in 1 second
 		setTimeout(() => {
-			checkLambdaStatus(FunctionName, lambda, count - 1, verbose).then((result) => {
-				if (result) {
-					log(`Update complete for "${FunctionName}`);
-					resolve(true);
-				} else {
-					reject();
-				}
-			});
+			checkLambdaStatus(FunctionName, lambda, count - 1, verbose)
+				.then((result) => {
+					resolve(result);
+				})
+				.catch((e) => {
+					log.error(e);
+					reject(e);
+				});
 		}, 1000);
 	});
 });
 
-module.exports = checkLambdaStatus;
+export default checkLambdaStatus;

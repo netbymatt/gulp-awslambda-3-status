@@ -16,49 +16,48 @@ As of October 2021 the AWS Lambda interface has been updated to require querying
 The method used to check status is as follows:
 - Call `checkLambdaStatus(FunctionName, lambda)` before running any Lambda command that would modify the function
 - Check status will monitor the result of `GetFunctionConfigurationCommand` for `State = 'Active'` and `LastUpdateStatus !== 'InProgress'`.
-- If the state requirements are not met, up to 10 retries at a 1 second interval are tried to allow AWS Lambda to complete it's initialization of the previous update.
+- If the state requirements are not met, up to 10 retries (default) at a 1 second interval are tried to allow AWS Lambda to complete it's initialization of the previous update.
 - This function will throw an error if the 10 retires are exhausted or if the Lambda function returns an error state.
-- This function will log `'Waiting for update to complete "${FunctionName}"'` to the console each time a retry situation is encountered.
+- This function will log `'Waiting for update to complete "${FunctionName}"'` to the console each time a retry situation is encountered when set to verbose.
+
+## Version 2.0
+Version 2.0 is written with ES modules. An `import` statement is required to use the package.
 
 ## Usage
 
 ### AWS Credentials and Configuration
 
-As this function is called as part of an AWS Lambda tool chain a pre-configured LambdaClient must be provided to this function as its second argument. Details for configuring the client can be found in the [AWS SDK documentation](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-lambda/interfaces/lambdaclientconfig.html). At a bare minimum region and credentials should be provided, although credentials will be pulled from environment variables or an ini file if present in the environment.
+As this function is called as part of an AWS Lambda tool chain a pre-configured `LambdaClient` must be provided to this function as its second argument. Details for configuring the client can be found in the [AWS SDK documentation](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-lambda/interfaces/lambdaclientconfig.html). At a bare minimum region and credentials should be provided, although credentials will be pulled from environment variables or an ini file if present in the environment.
 
 ### Basic Workflow
 
-checkLambdaStatus returns a promise so it is critical that the gulp task calling this funcition be async and that the function is called with await.
+`checkLambdaStatus` returns a promise so it is critical that the gulp task calling this funcition be async and that the function is called with await.
 
 ```js
-const gulp = require('gulp');
-const {LambdaClient} = require('@aws-sdk/client-lambda');
-const checkLambdaStatus = require('gulp-awslambda-3-status');
+import { LambdaClient } from '@aws-sdk/client-lambda';
+import checkLambdaStatus from './index.mjs';
 
-const functionName = 'test-lambda-function';
-
-const opts = {
+// configure lambda client
+const lambdaClient = new LambdaClient({
 	region: 'us-east-1',
-};
-
-// configure the lambda client
-const lambdaClient = new LambdaClient(opts);
-
-gulp.task('upload-and-publish', async () => {
-	// check the status of the function
-	await checkLambdaStatus(functionName, lambdaClient);
-	
-	// code to upload the lambda function
-	
-	await checkLambdaStatus(functionName, lambdaClient);
-
-	// code to publish the lambda function
 });
+
+// function name to query
+const functionName = 'gulp-awslambda-3-status-test';
+
+// create a task
+const checkStatus = async () => {
+	// check status before making updates to function
+	await checkLambdaStatus(functionName, lambdaClient);
+
+	// lambda function is ready for changes
+	// call code to upload, publish, etc on lambda function
+};
 ```
-Code similar to the example is provided in the gulp task `check-status`. You will need to set the function name and region in this file before running gulp.
+Code similar to the example is provided in the gulp task `checkStatus`. You will need to set the function name and region in this file before running gulp.
 
 ``` bash
-npx gulp check-status
+npx gulp checkStatus
 ```
 
 ## API

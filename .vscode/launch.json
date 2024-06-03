@@ -6,9 +6,9 @@
 	"configurations": [
 		{
 			"args": [
-				"check-status"
+				"checkStatus"
 			],
-			"name": "Gulp check-status",
+			"name": "Gulp checkStatus",
 			"program": "${workspaceFolder}/node_modules/gulp/bin/gulp.js",
 			"request": "launch",
 			"skipFiles": [
@@ -21,6 +21,5 @@
 			"type": "pwa-node",
 			"outputCapture": "std",
 		}
-
 	]
 }
